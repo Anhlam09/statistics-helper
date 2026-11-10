@@ -1,0 +1,691 @@
+{
+  "categories": [
+    {
+      "id": "foundations",
+      "name": "Foundations",
+      "blurb": "Start here: hypothesis tests, p-values, confidence intervals, power, and effect sizes."
+    },
+    {
+      "id": "design",
+      "name": "Study design & sample size",
+      "blurb": "How many participants do you need? Power and sample size before the study starts."
+    },
+    {
+      "id": "assumptions",
+      "name": "Assumption checks",
+      "blurb": "Check normality and equal variances before choosing a parametric test."
+    },
+    {
+      "id": "means",
+      "name": "Comparing means",
+      "blurb": "Parametric tests for continuous outcomes that are roughly normal."
+    },
+    {
+      "id": "posthoc",
+      "name": "Post-hoc & multiplicity",
+      "blurb": "Which groups differ after an omnibus test, and controlling false positives."
+    },
+    {
+      "id": "nonparametric",
+      "name": "Nonparametric tests",
+      "blurb": "Rank-based alternatives when data are skewed, ordinal, or n is small."
+    },
+    {
+      "id": "categorical",
+      "name": "Categorical data",
+      "blurb": "Proportions, contingency tables, and paired or stratified binary outcomes."
+    },
+    {
+      "id": "regression",
+      "name": "Correlation & regression",
+      "blurb": "Associations and models adjusting for covariates."
+    },
+    {
+      "id": "survival",
+      "name": "Survival analysis",
+      "blurb": "Time-to-event outcomes with censoring."
+    },
+    {
+      "id": "agreement",
+      "name": "Agreement & reliability",
+      "blurb": "Do two raters or two methods agree?"
+    },
+    {
+      "id": "diagnostic",
+      "name": "Diagnostic accuracy",
+      "blurb": "How well a test or biomarker separates diseased from healthy."
+    },
+    {
+      "id": "equivalence",
+      "name": "Equivalence & non-inferiority",
+      "blurb": "Showing a treatment is not worse than or the same as a comparator."
+    },
+    {
+      "id": "special",
+      "name": "Special topics",
+      "blurb": "Meta-analysis, missing data, propensity scores, and resampling methods."
+    }
+  ],
+  "tests": [
+    {
+      "slug": "hypothesis-testing",
+      "name": "Hypothesis testing and p-values",
+      "category": "foundations",
+      "outcome": "any",
+      "groups": "any",
+      "paired": false,
+      "parametric": null,
+      "summary": "What a null hypothesis, test statistic, and p-value really are, and what they are not."
+    },
+    {
+      "slug": "confidence-intervals",
+      "name": "Confidence intervals",
+      "category": "foundations",
+      "outcome": "any",
+      "groups": "any",
+      "paired": false,
+      "parametric": null,
+      "summary": "How to read a 95% CI, why it beats a p-value alone, and how sample size changes it."
+    },
+    {
+      "slug": "errors-and-power",
+      "name": "Type I and II errors, and power",
+      "category": "foundations",
+      "outcome": "any",
+      "groups": "any",
+      "paired": false,
+      "parametric": null,
+      "summary": "False positives, false negatives, power, and why multiple testing inflates errors."
+    },
+    {
+      "slug": "effect-sizes",
+      "name": "Effect sizes and clinical significance",
+      "category": "foundations",
+      "outcome": "any",
+      "groups": "any",
+      "paired": false,
+      "parametric": null,
+      "summary": "Statistical vs clinical significance: mean differences, Cohen's d, and the MCID."
+    },
+    {
+      "slug": "sample-size-means-proportions",
+      "name": "Sample size & power: means and proportions",
+      "category": "design",
+      "outcome": "any",
+      "groups": "2",
+      "paired": false,
+      "parametric": null,
+      "summary": "How many patients per arm to detect a difference in means or response rates."
+    },
+    {
+      "slug": "sample-size-survival",
+      "name": "Sample size for time-to-event studies",
+      "category": "design",
+      "outcome": "time-to-event",
+      "groups": "2",
+      "paired": false,
+      "parametric": null,
+      "summary": "Number of events and patients needed to detect a hazard ratio (Schoenfeld)."
+    },
+    {
+      "slug": "shapiro-wilk",
+      "name": "Shapiro–Wilk test",
+      "category": "assumptions",
+      "outcome": "continuous",
+      "groups": "any",
+      "paired": false,
+      "parametric": null,
+      "summary": "Tests whether a sample plausibly comes from a normal distribution."
+    },
+    {
+      "slug": "levene",
+      "name": "Levene's test",
+      "category": "assumptions",
+      "outcome": "continuous",
+      "groups": "2+",
+      "paired": false,
+      "parametric": null,
+      "summary": "Tests whether groups have equal variances."
+    },
+    {
+      "slug": "one-sample-t",
+      "name": "One-sample t-test",
+      "category": "means",
+      "outcome": "continuous",
+      "groups": "1",
+      "paired": false,
+      "parametric": true,
+      "summary": "Compares a sample mean to a known reference value."
+    },
+    {
+      "slug": "one-sample-z",
+      "name": "One-sample z-test",
+      "category": "means",
+      "outcome": "continuous",
+      "groups": "1",
+      "paired": false,
+      "parametric": true,
+      "summary": "Compares a sample mean to a reference value when the population SD is truly known (rare in practice)."
+    },
+    {
+      "slug": "independent-t",
+      "name": "Independent two-sample t-test (Student & Welch)",
+      "category": "means",
+      "outcome": "continuous",
+      "groups": "2",
+      "paired": false,
+      "parametric": true,
+      "summary": "Compares means of two independent groups, such as treatment vs placebo."
+    },
+    {
+      "slug": "paired-t",
+      "name": "Paired t-test",
+      "category": "means",
+      "outcome": "continuous",
+      "groups": "2",
+      "paired": true,
+      "parametric": true,
+      "summary": "Compares two measurements on the same subjects, such as before vs after treatment."
+    },
+    {
+      "slug": "one-way-anova",
+      "name": "One-way ANOVA",
+      "category": "means",
+      "outcome": "continuous",
+      "groups": "3+",
+      "paired": false,
+      "parametric": true,
+      "summary": "Compares means across three or more independent groups."
+    },
+    {
+      "slug": "welch-anova",
+      "name": "Welch's ANOVA",
+      "category": "means",
+      "outcome": "continuous",
+      "groups": "3+",
+      "paired": false,
+      "parametric": true,
+      "summary": "Compares means of three or more groups without assuming equal variances."
+    },
+    {
+      "slug": "repeated-measures-anova",
+      "name": "Repeated-measures ANOVA",
+      "category": "means",
+      "outcome": "continuous",
+      "groups": "3+",
+      "paired": true,
+      "parametric": true,
+      "summary": "Compares means across three or more time points on the same subjects."
+    },
+    {
+      "slug": "two-way-anova",
+      "name": "Two-way (factorial) ANOVA",
+      "category": "means",
+      "outcome": "continuous",
+      "groups": "3+",
+      "paired": false,
+      "parametric": true,
+      "summary": "Tests two factors and their interaction, such as drug × sex."
+    },
+    {
+      "slug": "manova",
+      "name": "MANOVA",
+      "category": "means",
+      "outcome": "continuous",
+      "groups": "2+",
+      "paired": false,
+      "parametric": true,
+      "summary": "Compares groups on several continuous outcomes at once."
+    },
+    {
+      "slug": "ancova",
+      "name": "ANCOVA",
+      "category": "means",
+      "outcome": "continuous",
+      "groups": "2+",
+      "paired": false,
+      "parametric": true,
+      "summary": "Compares group means adjusting for a baseline covariate; the standard RCT analysis of change."
+    },
+    {
+      "slug": "tukey-hsd",
+      "name": "Tukey's HSD",
+      "category": "posthoc",
+      "outcome": "continuous",
+      "groups": "3+",
+      "paired": false,
+      "parametric": true,
+      "summary": "All pairwise comparisons after ANOVA with family-wise error control."
+    },
+    {
+      "slug": "dunnett",
+      "name": "Dunnett's test",
+      "category": "posthoc",
+      "outcome": "continuous",
+      "groups": "3+",
+      "paired": false,
+      "parametric": true,
+      "summary": "Compares several treatment arms to a single control arm."
+    },
+    {
+      "slug": "multiple-comparisons",
+      "name": "Multiple-comparison corrections (Bonferroni, Holm, BH)",
+      "category": "posthoc",
+      "outcome": "any",
+      "groups": "any",
+      "paired": false,
+      "parametric": null,
+      "summary": "Adjusts p-values when you run many tests or endpoints."
+    },
+    {
+      "slug": "wilcoxon-signed-rank",
+      "name": "Wilcoxon signed-rank test",
+      "category": "nonparametric",
+      "outcome": "ordinal",
+      "groups": "2",
+      "paired": true,
+      "parametric": false,
+      "summary": "Nonparametric alternative to the paired t-test."
+    },
+    {
+      "slug": "mann-whitney",
+      "name": "Mann–Whitney U (Wilcoxon rank-sum) test",
+      "category": "nonparametric",
+      "outcome": "ordinal",
+      "groups": "2",
+      "paired": false,
+      "parametric": false,
+      "summary": "Nonparametric alternative to the independent t-test."
+    },
+    {
+      "slug": "kruskal-wallis",
+      "name": "Kruskal–Wallis test",
+      "category": "nonparametric",
+      "outcome": "ordinal",
+      "groups": "3+",
+      "paired": false,
+      "parametric": false,
+      "summary": "Nonparametric alternative to one-way ANOVA."
+    },
+    {
+      "slug": "friedman",
+      "name": "Friedman test",
+      "category": "nonparametric",
+      "outcome": "ordinal",
+      "groups": "3+",
+      "paired": true,
+      "parametric": false,
+      "summary": "Nonparametric alternative to repeated-measures ANOVA."
+    },
+    {
+      "slug": "sign-test",
+      "name": "Sign test",
+      "category": "nonparametric",
+      "outcome": "ordinal",
+      "groups": "2",
+      "paired": true,
+      "parametric": false,
+      "summary": "The simplest paired test: counts how many differences are positive vs negative."
+    },
+    {
+      "slug": "one-proportion",
+      "name": "One-sample proportion (exact binomial) test",
+      "category": "categorical",
+      "outcome": "binary",
+      "groups": "1",
+      "paired": false,
+      "parametric": null,
+      "summary": "Compares an observed response rate to a target rate."
+    },
+    {
+      "slug": "two-proportion-z",
+      "name": "Two-proportion z-test",
+      "category": "categorical",
+      "outcome": "binary",
+      "groups": "2",
+      "paired": false,
+      "parametric": null,
+      "summary": "Compares response rates between two independent groups."
+    },
+    {
+      "slug": "chi-square-independence",
+      "name": "Chi-square test of independence",
+      "category": "categorical",
+      "outcome": "categorical",
+      "groups": "2+",
+      "paired": false,
+      "parametric": null,
+      "summary": "Tests association between two categorical variables in an r × c table."
+    },
+    {
+      "slug": "chi-square-gof",
+      "name": "Chi-square goodness-of-fit test",
+      "category": "categorical",
+      "outcome": "categorical",
+      "groups": "1",
+      "paired": false,
+      "parametric": null,
+      "summary": "Compares observed category counts to expected proportions."
+    },
+    {
+      "slug": "fisher-exact",
+      "name": "Fisher's exact test",
+      "category": "categorical",
+      "outcome": "binary",
+      "groups": "2",
+      "paired": false,
+      "parametric": null,
+      "summary": "Exact test for 2 × 2 tables, especially with small expected counts."
+    },
+    {
+      "slug": "mcnemar",
+      "name": "McNemar's test",
+      "category": "categorical",
+      "outcome": "binary",
+      "groups": "2",
+      "paired": true,
+      "parametric": null,
+      "summary": "Compares paired binary outcomes, such as the same patients before and after."
+    },
+    {
+      "slug": "cmh",
+      "name": "Cochran–Mantel–Haenszel test",
+      "category": "categorical",
+      "outcome": "binary",
+      "groups": "2",
+      "paired": false,
+      "parametric": null,
+      "summary": "Tests a treatment–outcome association across strata, such as study sites."
+    },
+    {
+      "slug": "effect-measures",
+      "name": "Risk difference, relative risk, odds ratio, and NNT",
+      "category": "categorical",
+      "outcome": "binary",
+      "groups": "2",
+      "paired": false,
+      "parametric": null,
+      "summary": "The effect measures clinicians report for binary outcomes, with confidence intervals."
+    },
+    {
+      "slug": "trend-tests",
+      "name": "Tests for trend (Cochran–Armitage, Jonckheere–Terpstra)",
+      "category": "categorical",
+      "outcome": "binary",
+      "groups": "3+",
+      "paired": false,
+      "parametric": null,
+      "summary": "Tests a dose–response pattern across ordered groups."
+    },
+    {
+      "slug": "cochrans-q",
+      "name": "Cochran's Q test",
+      "category": "categorical",
+      "outcome": "binary",
+      "groups": "3+",
+      "paired": true,
+      "parametric": null,
+      "summary": "Compares a binary outcome across three or more conditions on the same subjects."
+    },
+    {
+      "slug": "pearson",
+      "name": "Pearson correlation",
+      "category": "regression",
+      "outcome": "continuous",
+      "groups": "n/a",
+      "paired": false,
+      "parametric": true,
+      "summary": "Measures linear association between two continuous variables."
+    },
+    {
+      "slug": "spearman",
+      "name": "Spearman rank correlation",
+      "category": "regression",
+      "outcome": "ordinal",
+      "groups": "n/a",
+      "paired": false,
+      "parametric": false,
+      "summary": "Measures monotonic association using ranks."
+    },
+    {
+      "slug": "kendall-tau",
+      "name": "Kendall's tau",
+      "category": "regression",
+      "outcome": "ordinal",
+      "groups": "n/a",
+      "paired": false,
+      "parametric": false,
+      "summary": "A rank correlation that handles ties and small samples well."
+    },
+    {
+      "slug": "linear-regression",
+      "name": "Linear regression",
+      "category": "regression",
+      "outcome": "continuous",
+      "groups": "n/a",
+      "paired": false,
+      "parametric": true,
+      "summary": "Models a continuous outcome from one or more predictors."
+    },
+    {
+      "slug": "logistic-regression",
+      "name": "Logistic regression",
+      "category": "regression",
+      "outcome": "binary",
+      "groups": "n/a",
+      "paired": false,
+      "parametric": true,
+      "summary": "Models a binary outcome and reports adjusted odds ratios."
+    },
+    {
+      "slug": "ordinal-regression",
+      "name": "Ordinal logistic (proportional odds) regression",
+      "category": "regression",
+      "outcome": "ordinal",
+      "groups": "n/a",
+      "paired": false,
+      "parametric": true,
+      "summary": "Models an ordered outcome such as the modified Rankin Scale with a common odds ratio."
+    },
+    {
+      "slug": "multinomial-logistic",
+      "name": "Multinomial logistic regression",
+      "category": "regression",
+      "outcome": "categorical",
+      "groups": "n/a",
+      "paired": false,
+      "parametric": true,
+      "summary": "Models an unordered categorical outcome with three or more levels."
+    },
+    {
+      "slug": "conditional-logistic",
+      "name": "Conditional logistic regression",
+      "category": "regression",
+      "outcome": "binary",
+      "groups": "n/a",
+      "paired": true,
+      "parametric": true,
+      "summary": "The analysis for matched case–control studies."
+    },
+    {
+      "slug": "firth-logistic",
+      "name": "Firth (penalized) logistic regression",
+      "category": "regression",
+      "outcome": "binary",
+      "groups": "n/a",
+      "paired": false,
+      "parametric": true,
+      "summary": "Logistic regression that still works with rare events, small samples, or separation."
+    },
+    {
+      "slug": "poisson-regression",
+      "name": "Poisson & negative binomial regression",
+      "category": "regression",
+      "outcome": "count",
+      "groups": "n/a",
+      "paired": false,
+      "parametric": true,
+      "summary": "Models counts or event rates, such as exacerbations per patient-year."
+    },
+    {
+      "slug": "mixed-models",
+      "name": "Linear mixed-effects models (MMRM)",
+      "category": "regression",
+      "outcome": "continuous",
+      "groups": "n/a",
+      "paired": true,
+      "parametric": true,
+      "summary": "Longitudinal or clustered data with missing visits; the workhorse of modern trials."
+    },
+    {
+      "slug": "gee",
+      "name": "Generalized estimating equations (GEE)",
+      "category": "regression",
+      "outcome": "any",
+      "groups": "n/a",
+      "paired": true,
+      "parametric": true,
+      "summary": "Population-averaged effects for correlated binary or count outcomes."
+    },
+    {
+      "slug": "kaplan-meier",
+      "name": "Kaplan–Meier estimator",
+      "category": "survival",
+      "outcome": "time-to-event",
+      "groups": "any",
+      "paired": false,
+      "parametric": false,
+      "summary": "Estimates survival curves and median survival with censoring."
+    },
+    {
+      "slug": "log-rank",
+      "name": "Log-rank test",
+      "category": "survival",
+      "outcome": "time-to-event",
+      "groups": "2+",
+      "paired": false,
+      "parametric": false,
+      "summary": "Compares survival curves between groups."
+    },
+    {
+      "slug": "cox-ph",
+      "name": "Cox proportional hazards regression",
+      "category": "survival",
+      "outcome": "time-to-event",
+      "groups": "n/a",
+      "paired": false,
+      "parametric": null,
+      "summary": "Estimates adjusted hazard ratios for time-to-event outcomes."
+    },
+    {
+      "slug": "competing-risks",
+      "name": "Competing risks (cumulative incidence & Fine–Gray)",
+      "category": "survival",
+      "outcome": "time-to-event",
+      "groups": "any",
+      "paired": false,
+      "parametric": null,
+      "summary": "Time-to-event analysis when another event, such as death, prevents the event of interest."
+    },
+    {
+      "slug": "cohens-kappa",
+      "name": "Cohen's kappa",
+      "category": "agreement",
+      "outcome": "categorical",
+      "groups": "2",
+      "paired": true,
+      "parametric": null,
+      "summary": "Agreement between two raters on a categorical rating, beyond chance."
+    },
+    {
+      "slug": "icc",
+      "name": "Intraclass correlation coefficient (ICC)",
+      "category": "agreement",
+      "outcome": "continuous",
+      "groups": "2+",
+      "paired": true,
+      "parametric": true,
+      "summary": "Reliability of continuous measurements across raters or repeats."
+    },
+    {
+      "slug": "cronbach-alpha",
+      "name": "Cronbach's alpha",
+      "category": "agreement",
+      "outcome": "ordinal",
+      "groups": "n/a",
+      "paired": true,
+      "parametric": null,
+      "summary": "Internal consistency of a multi-item questionnaire or scale."
+    },
+    {
+      "slug": "bland-altman",
+      "name": "Bland–Altman analysis",
+      "category": "agreement",
+      "outcome": "continuous",
+      "groups": "2",
+      "paired": true,
+      "parametric": true,
+      "summary": "Agreement between two measurement methods: bias and limits of agreement."
+    },
+    {
+      "slug": "roc-auc",
+      "name": "ROC curve, AUC, sensitivity & specificity",
+      "category": "diagnostic",
+      "outcome": "binary",
+      "groups": "n/a",
+      "paired": false,
+      "parametric": false,
+      "summary": "Evaluates how well a score or biomarker discriminates disease status."
+    },
+    {
+      "slug": "tost-equivalence",
+      "name": "Equivalence (TOST) & non-inferiority tests",
+      "category": "equivalence",
+      "outcome": "continuous",
+      "groups": "2",
+      "paired": false,
+      "parametric": true,
+      "summary": "Shows two treatments differ by less than a pre-specified margin."
+    },
+    {
+      "slug": "meta-analysis",
+      "name": "Meta-analysis (fixed and random effects)",
+      "category": "special",
+      "outcome": "any",
+      "groups": "n/a",
+      "paired": false,
+      "parametric": null,
+      "summary": "Pools results across studies, with heterogeneity and forest plots."
+    },
+    {
+      "slug": "multiple-imputation",
+      "name": "Missing data and multiple imputation",
+      "category": "special",
+      "outcome": "any",
+      "groups": "n/a",
+      "paired": false,
+      "parametric": null,
+      "summary": "Why complete-case analysis can mislead, and how multiple imputation works."
+    },
+    {
+      "slug": "propensity-scores",
+      "name": "Propensity scores",
+      "category": "special",
+      "outcome": "binary",
+      "groups": "2",
+      "paired": false,
+      "parametric": null,
+      "summary": "Adjusting for confounding in observational studies by matching or weighting."
+    },
+    {
+      "slug": "bootstrap-permutation",
+      "name": "Bootstrap and permutation tests",
+      "category": "special",
+      "outcome": "any",
+      "groups": "any",
+      "paired": false,
+      "parametric": false,
+      "summary": "Assumption-light inference by resampling your own data."
+    }
+  ]
+}
