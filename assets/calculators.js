@@ -96,15 +96,30 @@
       out.minE = Math.min(...E);
     } else out.chi_note = "Chi-square is undefined because a row or column total is 0.";
     const z = zq(0.975);
-    if (r1 > 0 && r2 > 0) {
+    const rowEmpty = r1 === 0 || r2 === 0, colEmpty = c1 === 0 || c2 === 0;
+    if (rowEmpty) {
+      // A group with no patients: no risk, so no RD, RR or OR (Fisher p is still defined, = 1)
+      out.ratio_note = out.rd_note = `Not estimable: group ${r1 === 0 ? 1 : 2} has no patients.`;
+    } else {
       const p1 = a / r1, p2 = c / r2;
       out.p1 = p1; out.p2 = p2;
       out.rd = p1 - p2;
+      // Newcombe (1998) hybrid score CI from the two Wilson intervals: stays inside [-1, 1]
+      // and keeps real width when a risk is 0% or 100% (e.g. 0/10 vs 0/10 gives about ±0.278)
+      const [l1, u1] = wilson(a, r1), [l2, u2] = wilson(c, r2); // 95% Wilson, defined below
+      out.rd_lo = out.rd - Math.sqrt((p1 - l1) ** 2 + (u2 - p2) ** 2);
+      out.rd_hi = out.rd + Math.sqrt((u1 - p1) ** 2 + (p2 - l2) ** 2);
+      // Wald CI, kept because it is what prop.test prints (and what the lessons show)
       const se = Math.sqrt((p1 * (1 - p1)) / r1 + (p2 * (1 - p2)) / r2);
-      out.rd_lo = out.rd - z * se; out.rd_hi = out.rd + z * se;
+      out.rd_wald_lo = out.rd - z * se; out.rd_wald_hi = out.rd + z * se;
+      out.rd_wald_bad = se === 0 || out.rd_wald_lo < -1 || out.rd_wald_hi > 1;
+      if (colEmpty) out.ratio_note = c1 === 0
+        ? "Not estimable: no one in either group had the outcome."
+        : "Not estimable: everyone in both groups had the outcome.";
     }
     const zero = a === 0 || b === 0 || c === 0 || d === 0;
-    out.adjusted = zero;
+    out.adjusted = zero && !rowEmpty && !colEmpty;
+    if (rowEmpty || colEmpty) return out;
     const k = zero ? 0.5 : 0;
     const A = a + k, B = b + k, C = c + k, D = d + k;
     const R1 = A + B, R2 = C + D;
@@ -195,8 +210,11 @@
       sens, spec, ppv: prop(tp, tp + fp), npv: prop(tn, tn + fn), acc: prop(tp + tn, tp + fp + fn + tn),
     };
     if (sens && spec) {
-      out.lr_pos = spec.est === 1 ? Infinity : sens.est / (1 - spec.est);
-      out.lr_neg = spec.est === 0 ? Infinity : (1 - sens.est) / spec.est;
+      // LR+ = sens / (1 - spec), LR- = (1 - sens) / spec. x/0 with x > 0 is infinite;
+      // 0/0 is undefined, so it is reported as not estimable rather than infinite.
+      const ratio = (top, bottom) => (bottom > 0 ? top / bottom : top > 0 ? Infinity : null);
+      out.lr_pos = ratio(sens.est, 1 - spec.est);
+      out.lr_neg = ratio(1 - sens.est, spec.est);
       if (prev !== null) {
         const dp = sens.est * prev + (1 - spec.est) * (1 - prev);
         const dn = (1 - sens.est) * prev + spec.est * (1 - prev);
@@ -206,6 +224,11 @@
     }
     return out;
   }
+
+  /* Reliable range for sample-size answers. Beyond ~1e7 per group the t-power search drifts from
+     the exact answer (checked against the large-sample formula), and no real study is that big. */
+  const N_LIMIT = 1e7;
+  const rangeError = (what, limit = N_LIMIT) => ({ errors: [`Outside the reliable calculation range: this design would need more than ${limit / 1e6} million ${what}. Check the inputs. Is the difference you want to detect realistic?`] });
 
   /* g. Sample size, two means: R power.t.test (two-sample, two-sided, strict = FALSE) */
   function powerT(n, delta, sd, alpha) {
@@ -229,7 +252,11 @@
     let lo = 2, hi = 4;
     if (powerT(lo, delta, sd, alpha) >= power) hi = lo;
     else {
-      while (powerT(hi, delta, sd, alpha) < power && hi < 1e9) { lo = hi; hi *= 2; }
+      while (powerT(hi, delta, sd, alpha) < power) {
+        // never present the search limit as an answer: if even N_LIMIT is underpowered, say so
+        if (hi >= N_LIMIT) return rangeError("participants per group");
+        lo = hi; hi = Math.min(hi * 2, N_LIMIT);
+      }
       for (let k = 0; k < 200 && hi - lo > 1e-11 * hi; k++) {
         const mid = (lo + hi) / 2;
         if (powerT(mid, delta, sd, alpha) < power) lo = mid; else hi = mid;
@@ -238,9 +265,11 @@
     const nRaw = hi === 2 ? 2 : (lo + hi) / 2;
     const n = Math.ceil(nRaw);
     const out = { n_raw: nRaw, n, total: 2 * n, power_achieved: powerT(n, delta, sd, alpha) };
+    if (out.power_achieved < power) return { errors: ["The search could not reach the requested power. Check the inputs."] };
     if (dropout > 0) {
       out.n_dropout = Math.ceil(n / (1 - dropout / 100));
       out.total_dropout = 2 * out.n_dropout;
+      if (out.n_dropout > N_LIMIT) return rangeError("participants per group after the dropout allowance");
     }
     return out;
   }
@@ -263,9 +292,13 @@
     const pb = (p1 + p2) / 2;
     const num = za * Math.sqrt(2 * pb * (1 - pb)) + zb * Math.sqrt(p1 * (1 - p1) + p2 * (1 - p2));
     const nRaw = (num * num) / ((p1 - p2) * (p1 - p2));
+    if (!(nRaw <= N_LIMIT)) return rangeError("participants per group");
     const n = Math.ceil(nRaw);
     const out = { n_raw: nRaw, n, total: 2 * n };
-    if (dropout > 0) { out.n_dropout = Math.ceil(n / (1 - dropout / 100)); out.total_dropout = 2 * out.n_dropout; }
+    if (dropout > 0) {
+      out.n_dropout = Math.ceil(n / (1 - dropout / 100)); out.total_dropout = 2 * out.n_dropout;
+      if (out.n_dropout > N_LIMIT) return rangeError("participants per group after the dropout allowance");
+    }
     return out;
   }
 
@@ -287,9 +320,11 @@
     const za = zq(1 - alpha / 2), zb = zq(power);
     const lh = Math.log(hr);
     const eventsRaw = ((za + zb) * (za + zb)) / (p * (1 - p) * lh * lh);
+    if (!(eventsRaw <= 2 * N_LIMIT)) return rangeError("events in total", 2 * N_LIMIT);
     const out = { events_raw: eventsRaw, events: Math.ceil(eventsRaw), za, zb };
     if (ep !== null) {
       out.total_n = Math.ceil(out.events / ep);
+      if (out.total_n > 2 * N_LIMIT) return rangeError("participants in total", 2 * N_LIMIT);
       out.n_group1 = Math.ceil(out.total_n * p);
       out.n_group2 = out.total_n - out.n_group1;
     }
@@ -424,24 +459,36 @@
       } else rows.push(["Chi-square", r.chi_note]);
       if (r.rd !== undefined) {
         rows.push(["Risk group 1 / group 2", pct(r.p1) + " / " + pct(r.p2)]);
-        rows.push(["Risk difference (Wald 95% CI)", num(r.rd) + " " + fmtCI(r.rd_lo, r.rd_hi)]);
-      }
-      rows.push(["Relative risk (95% CI)", num(r.rr) + " " + fmtCI(r.rr_lo, r.rr_hi)]);
-      rows.push(["Odds ratio (95% CI)", num(r.or) + " " + fmtCI(r.or_lo, r.or_hi)]);
+        rows.push(["Risk difference (Newcombe 95% CI)", num(r.rd) + " " + fmtCI(r.rd_lo, r.rd_hi)]);
+        rows.push(["Risk difference (Wald 95% CI, as printed by prop.test)",
+          fmtCI(r.rd_wald_lo, r.rd_wald_hi) + (r.rd_wald_bad ? "  (unreliable here: use Newcombe)" : "")]);
+      } else rows.push(["Risk difference", r.rd_note]);
+      const est = r.ratio_note === undefined;
+      rows.push(["Relative risk (log-Wald 95% CI)", est ? num(r.rr) + " " + fmtCI(r.rr_lo, r.rr_hi) : r.ratio_note]);
+      rows.push(["Sample odds ratio a·d / b·c (Woolf 95% CI, approximate)", est ? num(r.or) + " " + fmtCI(r.or_lo, r.or_hi) : r.ratio_note]);
       const m = [`matrix(c(${v.a}, ${v.c}, ${v.b}, ${v.d}), nrow = 2)`];
+      const notes = [];
+      if (r.adjusted) notes.push("A cell is zero, so 0.5 was added to every cell for the RR and OR (and their CIs). Fisher and chi-square use the raw counts.");
+      if (r.rd !== undefined) notes.push("The risk-difference CI uses Newcombe's hybrid score method, which stays sensible with small groups and with risks of 0% or 100%. The Wald CI is shown for comparison because it is what prop.test prints, but it can be too narrow (even zero width) or run past ±1 with small counts.");
+      if (est) notes.push("The odds ratio here is the sample odds ratio with an approximate (Woolf) CI. R's fisher.test reports a slightly different odds ratio, the conditional MLE, with an exact conditional CI. See the Fisher's exact test lesson.");
       return {
         key: [
           { label: "Fisher exact p (two-sided)", value: pf.main, small: pf.exact },
-          { label: "Odds ratio", value: num(r.or), small: "95% CI " + fmtCI(r.or_lo, r.or_hi) },
-          { label: "Relative risk", value: num(r.rr), small: "95% CI " + fmtCI(r.rr_lo, r.rr_hi) },
+          { label: "Sample odds ratio", value: est ? num(r.or) : "n/a", small: est ? "approx. 95% CI " + fmtCI(r.or_lo, r.or_hi) : r.ratio_note },
+          { label: "Relative risk", value: est ? num(r.rr) : "n/a", small: est ? "95% CI " + fmtCI(r.rr_lo, r.rr_hi) : r.ratio_note },
         ],
         rows,
-        method: "Pearson chi-square, Fisher exact test, and log-Wald intervals for RR and OR",
-        notes: r.adjusted ? ["A cell is zero, so 0.5 was added to every cell for the RR and OR (and their CIs). Fisher and chi-square use the raw counts."] : [],
+        method: "Pearson chi-square, Fisher exact test, Newcombe CI for the risk difference, and log-Wald (Woolf) CIs for RR and OR",
+        notes,
         r: [
           "tab <- " + m[0],
           "chisq.test(tab, correct = FALSE); chisq.test(tab, correct = TRUE)",
-          "fisher.test(tab)   # two-sided p; its OR is the conditional MLE, not a*d/(b*c)",
+          "fisher.test(tab)   # two-sided p; its OR is the conditional MLE with an exact CI, not a*d/(b*c)",
+          ...(r.rd !== undefined ? [
+            `w1 <- prop.test(${v.a}, ${v.a + v.b}, correct = FALSE)$conf.int; w2 <- prop.test(${v.c}, ${v.c + v.d}, correct = FALSE)$conf.int   # Wilson CIs`,
+            `p1 <- ${v.a} / ${v.a + v.b}; p2 <- ${v.c} / ${v.c + v.d}; rd <- p1 - p2`,
+            "c(rd - sqrt((p1 - w1[1])^2 + (w2[2] - p2)^2), rd + sqrt((w1[2] - p1)^2 + (p2 - w2[1])^2))   # Newcombe 95% CI",
+          ] : []),
         ],
       };
     },
@@ -527,10 +574,13 @@
       const r = diagnostic(v);
       if (r.errors) return r;
       const show = (o) => (o ? pct(o.est) + " " + fmtCI(o.lo, o.hi, (x) => pct(x)) : "n/a");
+      const lr = (x) => (x === null ? "Not estimable (0/0)" : num(x));
+      const lrNote = r.lr_pos === null || r.lr_neg === null
+        ? ["A likelihood ratio is not estimable when its numerator and denominator are both 0 (for example, no true positives and no false positives)."] : [];
       const rows = [
         ["Sensitivity", show(r.sens)], ["Specificity", show(r.spec)], ["PPV (this sample)", show(r.ppv)],
         ["NPV (this sample)", show(r.npv)], ["Accuracy", show(r.acc)],
-        ["LR+", num(r.lr_pos)], ["LR−", num(r.lr_neg)],
+        ["LR+", lr(r.lr_pos)], ["LR−", lr(r.lr_neg)],
       ];
       if (r.ppv_prev !== undefined) {
         rows.push(["PPV at stated prevalence", r.ppv_prev === null ? "n/a" : pct(r.ppv_prev)]);
@@ -540,11 +590,12 @@
         key: [
           { label: "Sensitivity", value: r.sens ? pct(r.sens.est) : "n/a", small: r.sens ? "95% CI " + fmtCI(r.sens.lo, r.sens.hi, pct) : "" },
           { label: "Specificity", value: r.spec ? pct(r.spec.est) : "n/a", small: r.spec ? "95% CI " + fmtCI(r.spec.lo, r.spec.hi, pct) : "" },
-          { label: "LR+ / LR−", value: num(r.lr_pos) + " / " + num(r.lr_neg) },
+          { label: "LR+ / LR−", value: (r.lr_pos === null ? "n/a" : num(r.lr_pos)) + " / " + (r.lr_neg === null ? "n/a" : num(r.lr_neg)),
+            small: lrNote.length ? "n/a = not estimable (0/0)" : "" },
         ],
         rows,
         method: "Diagnostic accuracy measures with Clopper–Pearson 95% CIs; predictive values by Bayes' rule when prevalence is given",
-        notes: r.ppv_prev === undefined ? ["Predictive values above reflect the prevalence in this sample. Enter a prevalence to recompute them for another population."] : [],
+        notes: [...lrNote, ...(r.ppv_prev === undefined ? ["Predictive values above reflect the prevalence in this sample. Enter a prevalence to recompute them for another population."] : [])],
         r: [
           "binom.test(" + v.tp + ", " + (v.tp + v.fn) + ")$conf.int   # sensitivity CI",
           "binom.test(" + v.tn + ", " + (v.tn + v.fp) + ")$conf.int   # specificity CI",

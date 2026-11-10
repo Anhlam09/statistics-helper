@@ -30,6 +30,14 @@
       "3+": { ind: [r("chi-square-independence", "An r × c contingency table."), r("trend-tests", "If the groups are ordered (e.g., doses), a trend test is more powerful."), r("fisher-exact", "Use the exact version (Fisher–Freeman–Halton) when counts are small."), r("logistic-regression", "To adjust for covariates.")],
               pair: [r("cochrans-q", "Same subjects under 3+ conditions with a yes/no outcome."), r("gee", "Repeated binary outcomes with covariates: population-averaged odds ratios.")] },
     },
+    // 3+ unordered categories (ordered categories such as disease stage go to "skewed")
+    nominal: {
+      "1":  { ind: [r("chi-square-gof", "Do the observed category proportions match expected ones (e.g., a reference population)?")] },
+      "2":  { ind: [r("chi-square-independence", "A 2 × k table: compare the distribution across categories between the two groups."), r("fisher-exact", "Small expected counts: the Fisher–Freeman–Halton extension (fisher.test in R handles r × c tables)."), r("multinomial-logistic", "To adjust for covariates: one odds ratio per category vs a reference category.")],
+              pair: [r("mcnemar", "The same subjects classified twice into k categories: R's mcnemar.test on a k × k table runs Bowker's test of symmetry (the McNemar extension).")] },
+      "3+": { ind: [r("chi-square-independence", "An r × c table: groups by categories."), r("fisher-exact", "Small expected counts: the Fisher–Freeman–Halton extension."), r("multinomial-logistic", "To adjust for covariates.")],
+              pair: [r("gee", "Repeated unordered categorical outcomes need a multinomial GEE or mixed model (e.g., R package multgee); worth a statistician's input.")] },
+    },
     count: {
       "1":  { ind: [r("poisson-regression", "Estimate an event rate with a CI (an intercept-only model with an exposure offset).")] },
       "2":  { ind: [r("poisson-regression", "Rate ratio between groups; switch to negative binomial if overdispersed.")],
@@ -44,8 +52,9 @@
     q: "What type of outcome are you comparing?",
     options: [
       { key: "normal", label: "Continuous, roughly normal", hint: "e.g., blood pressure, HbA1c, cholesterol", next: "groups" },
-      { key: "skewed", label: "Continuous but skewed, or ordinal", hint: "e.g., length of stay, pain score 0–10, Likert", next: "groups" },
-      { key: "binary", label: "Binary or categorical", hint: "e.g., responder yes/no, adverse event, disease stage", next: "groups" },
+      { key: "skewed", label: "Continuous but skewed, or ordinal (ordered categories)", hint: "e.g., length of stay, pain score 0–10, Likert, disease stage", next: "groups" },
+      { key: "binary", label: "Binary (yes/no)", hint: "e.g., responder yes/no, adverse event, 30-day mortality", next: "groups" },
+      { key: "nominal", label: "Categorical: 3+ unordered categories", hint: "e.g., discharge destination, blood type, tumour subtype", next: "groups" },
       { key: "count",  label: "Count or rate", hint: "e.g., number of exacerbations, events per patient-year", next: "groups" },
       { key: "tte",    label: "Time to an event", hint: "e.g., overall survival, time to relapse (with censoring)", next: "tteGoal" },
     ],

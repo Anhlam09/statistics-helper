@@ -15,20 +15,16 @@
   const slugify = (s) => s.toLowerCase().replace(/<[^>]+>/g, "").replace(/[^\w]+/g, "-").replace(/^-|-$/g, "");
 
   let manifest = { categories: [], tests: [] };
-  const available = new Set();      // slugs whose markdown exists
+  const available = new Set();      // slugs with a written lesson
   const pageCache = new Map();
 
   /* ---------- Data loading ---------- */
   async function loadManifest() {
     const res = await fetch("content/manifest.json", { cache: "no-cache" });
     manifest = await res.json();
-    // Probe which pages exist so unfinished ones show as "coming soon"
-    await Promise.all(manifest.tests.map(async (t) => {
-      try {
-        const r = await fetch(`content/tests/${t.slug}.md`, { method: "HEAD", cache: "no-cache" });
-        if (r.ok) available.add(t.slug);
-      } catch { /* offline */ }
-    }));
+    // The manifest is the source of truth (tools/check_content.py verifies every entry has a
+    // lesson file). Mark an unfinished lesson with "soon": true to show it as "coming soon".
+    for (const t of manifest.tests) if (!t.soon) available.add(t.slug);
   }
 
   async function loadPage(path) {

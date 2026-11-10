@@ -33,6 +33,7 @@ tools/                  Content, calculator and code-example checks
 ```bash
 python3 tools/check_content.py     # lesson structure
 node tools/test_calculators.js     # calculators vs R reference values
+node tools/test_edge_cases.js      # invalid and extreme inputs, wizard routes, story matcher
 node tools/viz_pvalues.js          # p-values shown in diagrams
 python3 tools/run_examples.py      # runs every R and Python example (needs R and Python packages)
 ```

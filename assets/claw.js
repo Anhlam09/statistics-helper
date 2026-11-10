@@ -20,6 +20,10 @@
   const SKEW = /ordinal|likert|pain score|severity (scale|score|grade)|ranks?\b|ranked|skew|not normal|non-?normal|outliers?/;
   const SMALL = /small|few|rare|under 5|less than 5|fewer than 5|tiny/;
   const ADJUST = /adjust|covariat|controlling for|predict|risk factors?|several factors|multiple factors|while accounting/;
+  // separate groups of people (as opposed to the same people measured twice)
+  const GROUPS = /randomi[sz]|randomly (assigned|allocated)|placebo|control group|usual care|standard care|\b(two|2|three|3|four|4|several|multiple) (treatment |study |dose |separate )?(groups|arms)\b|treatment (groups|arms)|\barms?\b/;
+  const REPEATED = /repeated|over time|longitudinal|every (week|month)|at (weeks|months)|\b(three|four|five|six|3|4|5|6|several|multiple) (visits|time ?points|occasions|times)\b/;
+  const MIXED_NOTE = "Your study has separate groups and measurements over time, so a paired test would ignore the comparison between groups. The usual analysis compares the groups at follow-up, adjusting for baseline (ANCOVA); with several follow-up visits, a mixed model. If the design is more complex, check with a statistician.";
 
   const RULES = [
     [/compet(ing)? risks?|competing event/, "competing-risks", "time to an event where another event can get in the way first"],
@@ -50,6 +54,8 @@
   ];
 
   function binaryRule(s) {
+    if (has(s, GROUPS) && (has(s, PAIRED) || has(s, REPEATED))) return ["logistic-regression", "a yes/no outcome compared between groups, adjusting for each person's baseline status",
+      "McNemar's test compares two time points within one group. With separate groups, compare them at follow-up using logistic regression adjusted for baseline (or GEE for several visits)."];
     if (has(s, PAIRED)) return ["mcnemar", "a yes/no outcome measured twice on the same people"];
     if (has(s, /strat|centers|centres|sites|hospitals/) && !has(s, ADJUST)) return ["cmh", "a yes/no outcome compared across groups, stratified by center"];
     if (has(s, ADJUST) || has(s, /odds/)) return ["logistic-regression", "a yes/no outcome predicted from several factors"];
@@ -68,14 +74,22 @@
     }
     if (has(s, /correlat|relationship|associated with|association between|related to|link between/) && !has(s, ADJUST))
       return has(s, SKEW) ? { slug: "spearman", why: "a relationship between two ranked or skewed variables" } : { slug: "pearson", why: "a straight-line relationship between two continuous variables" };
-    if (has(s, BINARY)) { const [slug, why] = binaryRule(s); return { slug, why }; }
+    if (has(s, BINARY)) { const [slug, why, note] = binaryRule(s); return { slug, why, note }; }
+    // separate groups AND before/after or repeated measurements: not a paired comparison
+    const groupsOverTime = has(s, GROUPS) && (has(s, PAIRED) || has(s, REPEATED));
     if (has(s, SKEW)) {
+      if (groupsOverTime) return { slug: "ancova", why: "separate groups each measured at baseline and follow-up",
+        note: MIXED_NOTE + " Because your outcome is skewed or ordinal, also consider a rank-based or ordinal model." };
       if (has(s, PAIRED)) return { slug: "wilcoxon-signed-rank", why: "skewed or ordinal data measured twice on the same people" };
       if (has(s, MANY)) return { slug: "kruskal-wallis", why: "skewed or ordinal data across three or more groups" };
       return { slug: "mann-whitney", why: "skewed or ordinal data in two independent groups" };
     }
+    if (groupsOverTime) {
+      if (has(s, REPEATED) || has(s, /missing|dropout|mmrm|mixed/)) return { slug: "mixed-models", why: "separate groups each measured at several time points", note: MIXED_NOTE };
+      return { slug: "ancova", why: (has(s, MANY) ? "three or more groups" : "separate groups") + " each measured at baseline and follow-up", note: MIXED_NOTE };
+    }
     if (has(s, ADJUST)) return has(s, /baseline/) ? { slug: "ancova", why: "comparing groups while adjusting for a baseline value" } : { slug: "linear-regression", why: "a continuous outcome predicted from several factors" };
-    if (has(s, /repeated|over time|several visits|multiple visits|longitudinal|every (week|month)|at (weeks|months)/))
+    if (has(s, REPEATED))
       return has(s, /missing|dropout|mmrm|mixed/) ? { slug: "mixed-models", why: "repeated measurements over time with dropouts" } : { slug: "repeated-measures-anova", why: "the same people measured at three or more time points" };
     if (has(s, PAIRED)) return { slug: "paired-t", why: "a continuous measurement taken twice on the same people" };
     if (has(s, /two factors|factorial|and (by )?sex|by (sex|gender) and/)) return { slug: "two-way-anova", why: "a continuous outcome with two factors at once" };
@@ -158,11 +172,11 @@
     new ResizeObserver(fit).observe(el);
 
     let busy = false;
-    async function grab(machine, test, why) {
+    async function grab(machine, test, why, note) {
       if (busy) return; busy = true;
       prize.innerHTML = "";
       machine.after(prize); // the prize card lands right under the machine you played
-      if (!machine.querySelector(".machine-glass")) { await showPrize(test, why); busy = false; return; }
+      if (!machine.querySelector(".machine-glass")) { await showPrize(test, why, note, machine); busy = false; return; }
       const glass = machine.querySelector(".machine-glass"), claw = machine.querySelector(".claw"), rope = machine.querySelector(".claw-rope");
       const pile = machine.querySelector(".pile");
       let item = pile.querySelector(`.pile-item[data-slug="${test.slug}"]:not([hidden])`);
@@ -188,7 +202,7 @@
       claw.classList.remove("closed");
       item.style.transform = `translate(${chuteX - x}px, 40px)`; item.style.opacity = "0";
       await wait(450);
-      await showPrize(test, why);
+      await showPrize(test, why, note, machine);
       item.style.transition = "none"; item.style.transform = ""; item.classList.remove("lifted");
       fill(item, pickNew()); // a fresh plush drops into the empty spot
       requestAnimationFrame(() => { item.style.transition = ""; item.style.opacity = ""; });
@@ -196,7 +210,7 @@
       busy = false;
     }
 
-    async function showPrize(t, why) {
+    async function showPrize(t, why, note, machine) {
       const md = await loadPage(`content/tests/${t.slug}.md`).catch(() => "");
       const g = md ? glance(md) : null;
       const [rLine, pyLine] = (window.KEYCODE || {})[t.slug] || [];
@@ -213,6 +227,7 @@
       ].filter(([, v]) => v && v !== "n/a");
       prize.innerHTML = `
         ${why ? `<p class="prize-why">We picked this because your study sounds like <strong>${esc(why)}</strong>.</p>` : ""}
+        ${note ? `<p class="prize-why prize-note">${esc(note)}</p>` : ""}
         <div class="prize">
           <button class="flip-card" aria-label="Flip the ${esc(t.name)} card">
             <span class="flip-inner">
@@ -238,12 +253,24 @@
             ${g ? `<p><strong>When to use it:</strong> ${esc(g[0])}</p>` : ""}
             ${rLine ? `<div class="prize-code"><span>R</span><code>${esc(rLine)}</code></div>` : ""}
             ${pyLine ? `<div class="prize-code"><span>Python</span><code>${esc(pyLine)}</code></div>` : ""}
-            <div class="btn-row"><a class="btn" href="#/test/${t.slug}">Read the full lesson →</a><button class="btn ghost prize-again">Play again</button></div>
+            <div class="btn-row"><a class="btn" href="#/test/${t.slug}">Read the full lesson →</a><button class="btn ghost prize-again">${machine && machine.classList.contains("machine-story") ? "Try another study" : "Play again"}</button></div>
           </div>
         </div>`;
       const card = prize.querySelector(".flip-card");
       card.addEventListener("click", () => card.classList.toggle("flipped"));
-      prize.querySelector(".prize-again").addEventListener("click", () => el.querySelector(".machine-test .claw-go").focus());
+      prize.querySelector(".prize-again").addEventListener("click", () => {
+        prize.innerHTML = "";
+        if (machine && machine.classList.contains("machine-story")) {
+          // start over: clear the description and put the cursor back in the box
+          input.value = ""; err.textContent = "";
+          input.scrollIntoView({ behavior: reduced() ? "auto" : "smooth", block: "center" });
+          input.focus({ preventScroll: true });
+        } else {
+          // grab another random plush
+          testMachine.scrollIntoView({ behavior: reduced() ? "auto" : "smooth", block: "nearest" });
+          testMachine.querySelector(".claw-go").click();
+        }
+      });
       prize.scrollIntoView({ behavior: reduced() ? "auto" : "smooth", block: "nearest" });
     }
 
@@ -262,7 +289,7 @@
       const hit = matchStory(s);
       const t = hit && tests.find((x) => x.slug === hit.slug);
       if (!t) { err.innerHTML = `We need a few more clues. Mention your outcome (a measurement, yes/no, time to an event) and your groups, or try the <a href="#/choose">step-by-step chooser</a>.`; return; }
-      grab(storyMachine, t, hit.why);
+      grab(storyMachine, t, hit.why, hit.note);
     });
   }
 

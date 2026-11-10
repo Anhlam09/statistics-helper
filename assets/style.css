@@ -383,6 +383,7 @@ a.card:hover { border-color: var(--accent); transform: translateY(-2px); box-sha
 .claw-collect { color: var(--muted); font-size: .88rem; margin: 12px 0 0; }
 
 .prize-why { background: var(--accent-soft); color: var(--accent-ink); border-radius: 12px; padding: 10px 14px; margin: 18px 0 0; }
+.prize-note { background: var(--warn-bg); color: var(--text); border: 1px solid var(--warn-border); margin-top: 8px; font-size: .92rem; }
 .prize { display: grid; grid-template-columns: 260px minmax(0, 1fr); gap: 28px; align-items: start; margin-top: 18px; }
 @media (max-width: 680px) { .prize { grid-template-columns: minmax(0, 1fr); justify-items: center; } }
 .flip-card { all: unset; cursor: pointer; display: block; width: 260px; height: 372px; perspective: 1000px; border-radius: 18px; }
