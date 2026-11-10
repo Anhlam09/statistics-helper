@@ -63,7 +63,7 @@ window.KEYCODE = {
   "tost-equivalence": ["TOSTER::t_TOST(new, ref, eqb = 5)", "ttost_ind(new, ref, -5, 5)"],
   "meta-analysis": ["metafor::rma(yi, sei = sei, method = 'REML')", "combine_effects(yi, vi, method_re='dl')"],
   "multiple-imputation": ["pool(with(mice(df, m = 20), lm(y ~ arm + age)))", "MICE(model_formula, sm.OLS, MICEData(df)).fit()"],
-  "propensity-scores": ["MatchIt::matchit(treat ~ age + sex, data = df)", "smf.logit('treat ~ age + sex', data=df).fit().predict()"],
+  "propensity-scores": ["MatchIt::matchit(treat ~ age + sex, data = df, link = \"linear.logit\")", "smf.logit('treat ~ age + sex', data=df).fit().predict()"],
   "bootstrap-permutation": ["boot::boot(df, stat_fn, R = 2000)", "stats.bootstrap((x,), np.mean)"],
 };
 

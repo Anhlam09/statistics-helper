@@ -1,43 +1,27 @@
 # Statistics Helper
 
-A free, friendly guide to choosing and running statistical tests in clinical research. It has 62 lessons, each with a plain-language explanation, a clinical example, the assumptions to check, and runnable **R** and **Python** code. Some lessons also include **SAS** code, which is marked as not yet tested.
+Hey everyone! 👋
 
-**Live site:** https://anhlam09.github.io/statistics-helper/
+I built **Statistics Helper**, a free interactive tool to make learning statistics a little easier.
 
-> **Educational resource.** Always pre-specify your analysis and consult a statistician for trial work.
+You can explore different statistical tests, learn when to use them, follow step-by-step examples with R and Python code, and try out interactive calculators.
 
-## Run it locally
+It's designed to be beginner-friendly and make statistics feel less intimidating!
 
-The site is static (HTML, CSS and JavaScript, with no build step). Pages are loaded with `fetch`, so serve the folder instead of opening `index.html` directly:
+☕ **Try it here:** https://anhlam09.github.io/statistics-helper/
 
-```bash
-python3 -m http.server 8765
-```
+**Disclaimer:** This is a personal educational project intended for learning and practice only. It has not been professionally validated and should not be used for clinical decisions, official research analyses, or other professional applications without independent verification.
 
-Then open http://localhost:8765.
+## What's inside
 
-## Structure
-
-```
-index.html              App shell
-assets/                 Styles, router, plush mascots, café, claw machine, calculators, diagrams
-content/manifest.json   Categories and tests (drives navigation, search and routing)
-content/tests/*.md      One lesson per test (paired-t.md is the reference lesson)
-content/about.md        About page
-CONTENT_GUIDE.md        Rules for writing a lesson
-tools/                  Content, calculator and code-example checks
-```
-
-## Checks
-
-```bash
-python3 tools/check_content.py     # lesson structure
-node tools/test_calculators.js     # calculators vs R reference values
-node tools/test_edge_cases.js      # invalid and extreme inputs, wizard routes, story matcher
-node tools/viz_pvalues.js          # p-values shown in diagrams
-python3 tools/run_examples.py      # runs every R and Python example (needs R and Python packages)
-```
+- 62 lessons, each with a plain-language explanation, a clinical example, the assumptions to check, and runnable R and Python code (some lessons also include SAS code, marked as not yet tested)
+- A "Which test?" decision tree, plus a claw machine and a "describe your study" box to find the right lesson
+- 9 interactive calculators for common tests and sample sizes
 
 ## Author
 
 Made by Anh Lam.
+
+## Copyright
+
+© 2026 Anh Lam. All rights reserved. You're welcome to use the website to learn. Please don't copy, republish, or redistribute its content or code without permission.

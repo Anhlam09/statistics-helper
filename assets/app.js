@@ -22,8 +22,8 @@
   async function loadManifest() {
     const res = await fetch("content/manifest.json", { cache: "no-cache" });
     manifest = await res.json();
-    // The manifest is the source of truth (tools/check_content.py verifies every entry has a
-    // lesson file). Mark an unfinished lesson with "soon": true to show it as "coming soon".
+    // The manifest is the source of truth (every entry is checked for a lesson file before
+    // publishing). Mark an unfinished lesson with "soon": true to show it as "coming soon".
     for (const t of manifest.tests) if (!t.soon) available.add(t.slug);
   }
 

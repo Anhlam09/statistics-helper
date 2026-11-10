@@ -129,7 +129,8 @@ w_ate <- ifelse(d$treat == 1, 1/ps, 1/(1 - ps))        # IPTW (ATE) weights
 
 # 3. 1:1 nearest-neighbour matching on the logit PS, caliper 0.2 SD
 m <- matchit(treat ~ age + diab + sev, d, method = "nearest",
-             distance = "glm", caliper = 0.2, ratio = 1)
+             distance = "glm", link = "linear.logit",
+             caliper = 0.2, ratio = 1)
 md <- match.data(m)
 cat("Matched pairs:", sum(md$treat), "of", sum(d$treat), "treated\n")
 
@@ -155,7 +156,8 @@ print(round(coeftest(fw, vcovHC(fw, "HC1"))["treat", 1:2], 2))
 
 - Data are typed in as compact vectors, shared with the Python tab, so both languages use the same patients.
 - `glm(..., binomial)` gives the propensity score; `w_ate` are the IPTW weights.
-- `matchit(..., method = "nearest", distance = "glm", caliper = 0.2)` does greedy 1:1 matching without replacement on the **logit** PS, dropping treated patients with no control within 0.2 SD. `match.data()` returns the matched sample with weights.
+- `matchit(..., method = "nearest", distance = "glm", caliper = 0.2)` does greedy 1:1 matching without replacement, dropping treated patients with no control within 0.2 SD of the distance. `match.data()` returns the matched sample with weights.
+- `link = "linear.logit"` makes `MatchIt` match on the **logit** of the PS (the linear predictor). Without it, `distance = "glm"` matches on the **probability** scale, and the caliper becomes 0.2 SD of the probability instead. That gives different pairs.
 - `smd()` computes standardized mean differences (raw, after matching, after weighting), always using the **original** pooled SD as the denominator.
 - The matched estimate uses a regression with cluster-robust SE (pairs are clusters); the IPTW estimate uses a heteroskedasticity-robust (HC1) SE. Ordinary SEs are wrong for weighted data.
 
@@ -166,11 +168,11 @@ treat
 -4.01 
 Matched pairs: 77 of 103 treated
        raw matched  iptw
-age  0.324  -0.084 0.066
-diab 0.240   0.084 0.000
-sev  0.678   0.104 0.050
+age  0.324  -0.004 0.066
+diab 0.240   0.056 0.000
+sev  0.678   0.068 0.050
   Estimate Std. Error 
-      3.74       1.37 
+      3.32       1.38 
   Estimate Std. Error 
       2.84       2.04 
 ```
@@ -289,7 +291,7 @@ Matched: 3.32 (SE 1.37)
 IPTW: 2.84 (SE 2.04)
 ```
 
-**Why R and Python agree only partly.** The naive estimate, the PS model, the IPTW estimate, the raw SMDs, and the number of matched pairs (77) are identical. The matched **pairs** are not: greedy matching is order-dependent and `MatchIt` and the hand-written loop differ in tie-breaking details, so the matched SMDs (e.g. age −0.084 vs −0.004) and estimate (3.74 vs 3.32) differ slightly. Both are legitimate; report whichever you pre-specified and run your matching code deterministically.
+**R and Python agree.** Both match greedily on the logit PS (largest score first) with a caliper of 0.2 SD of the logit, so they pick the same 77 pairs and give the same matched SMDs and estimate (3.32). Only the matched SE differs slightly (1.38 vs 1.37): R uses a cluster-robust SE with pairs as clusters, while Python uses the SE of the paired differences. The scale matters. If you leave out `link = "linear.logit"`, `MatchIt` matches on the probability scale instead and picks different pairs (here the age SMD after matching becomes −0.084 and the estimate 3.74). Neither scale is wrong, but they are different analyses: pre-specify the scale and the caliper, and say which you used.
 
 ## Interpreting the output
 
@@ -297,14 +299,14 @@ IPTW: 2.84 (SE 2.04)
 - **Balance before:** SMD for severity 0.68, age 0.32, diabetes 0.24: the groups were not comparable.
 - **Balance after matching:** all |SMD| are about 0.1 or below (R: age −0.08, diabetes 0.08, severity 0.10; Python: ≤ 0.07). Balance is adequate, though severity in R sits on the 0.1 threshold, so a more flexible PS model could be tried.
 - **Balance after IPTW:** all |SMD| ≤ 0.07. Weighting balances all measured covariates well here.
-- **Matched estimate (ATT): 3.74 (SE 1.37) in R, 3.32 in Python.** 95% CI about 1.1 to 6.4. The effect is positive and the CI includes the truth (+5). Only 77 of 103 treated patients were matched, so this estimates the effect in the *matchable* treated population.
+- **Matched estimate (ATT): 3.32 (SE 1.38 in R, 1.37 in Python).** 95% CI about 0.6 to 6.0. The effect is positive and the CI includes the truth (+5). Only 77 of 103 treated patients were matched, so this estimates the effect in the *matchable* treated population.
 - **IPTW estimate (ATE): 2.84 (SE 2.04).** 95% CI about −1.2 to 6.8. It is also in the right direction, but wide: IPTW weights range up to about 6, which inflates variance. The truth is inside the interval.
-- **Why do matching and IPTW differ?** They target different populations: matching estimates the **ATT** (here, among the 77 matched treated patients), IPTW the **ATE** (everyone). If the effect varied by patient, the two estimands would differ. In this simulation the true effect is +5 for everyone, so ATT = ATE = +5, and the gap between 3.7 (or 3.3) and 2.8 is sampling noise plus method differences (IPTW uses all 200 patients but with unstable weights), not a real difference between the estimands. To estimate the ATT with weighting, give treated patients weight 1 and untreated patients e(x)/(1 − e(x)).
-- **Comparison with the truth (+5).** Naive −4.0 (wrong sign), matched 3.3 to 3.7, IPTW 2.8. Both PS methods fix the sign and get much closer. Neither hits +5 exactly: with 200 patients the sampling error is large (SEs 1.4–2.0), and the estimates differ from the truth by less than about 2 SEs.
+- **Why do matching and IPTW differ?** They target different populations: matching estimates the **ATT** (here, among the 77 matched treated patients), IPTW the **ATE** (everyone). If the effect varied by patient, the two estimands would differ. In this simulation the true effect is +5 for everyone, so ATT = ATE = +5, and the gap between 3.3 and 2.8 is sampling noise plus method differences (IPTW uses all 200 patients but with unstable weights), not a real difference between the estimands. To estimate the ATT with weighting, give treated patients weight 1 and untreated patients e(x)/(1 − e(x)).
+- **Comparison with the truth (+5).** Naive −4.0 (wrong sign), matched 3.3, IPTW 2.8. Both PS methods fix the sign and get much closer. Neither hits +5 exactly: with 200 patients the sampling error is large (SEs 1.4–2.0), and the estimates differ from the truth by less than about 2 SEs.
 - **What was not checked.** These results are only valid if no **unmeasured** confounder remains (here, by construction, none exists). In real data you never know.
 
 **How to report it:**
-> Of 200 patients, 103 received the therapy. Propensity scores were estimated by logistic regression on age, diabetes, and severity. After 1:1 nearest-neighbour matching on the logit propensity score (caliper 0.2 SD; 77 pairs), all standardized mean differences were about 0.1 or smaller (maximum 0.104). The therapy was associated with a 3.7-point higher function score (95% CI 1.1 to 6.4). IPTW gave a similar estimate (2.8 points; 95% CI −1.2 to 6.8). Results assume no unmeasured confounding.
+> Of 200 patients, 103 received the therapy. Propensity scores were estimated by logistic regression on age, diabetes, and severity. After 1:1 nearest-neighbour matching on the logit propensity score (caliper 0.2 SD; 77 pairs), all standardized mean differences were below 0.1 (maximum 0.068). The therapy was associated with a 3.3-point higher function score (95% CI 0.6 to 6.0). IPTW gave a similar estimate (2.8 points; 95% CI −1.2 to 6.8). Results assume no unmeasured confounding.
 
 ## Check your understanding
 
@@ -325,7 +327,7 @@ This is a **positivity violation**. There are no untreated patients comparable t
 
 <details class="check"><summary>4. In our example the matched analysis used 77 of 103 treated patients. Does that make the result biased?</summary>
 
-Not necessarily biased, but it changes the **target population**: the estimate applies to the treated patients who could be matched within the caliper, not to all 103. The loss of patients also widens the CI (SE 1.37). Always report how many were matched, and compare the characteristics of matched and unmatched treated patients.
+Not necessarily biased, but it changes the **target population**: the estimate applies to the treated patients who could be matched within the caliper, not to all 103. The loss of patients also widens the CI (SE 1.38). Always report how many were matched, and compare the characteristics of matched and unmatched treated patients.
 </details>
 
 ## Common mistakes
@@ -336,6 +338,7 @@ Not necessarily biased, but it changes the **target population**: the estimate a
 - **Ignoring positivity.** Check overlap plots and extreme weights, and trim or restrict when needed.
 - **Using ordinary standard errors** after weighting or matching. Use robust, cluster-robust, or bootstrap SEs.
 - **Matching with a wide or no caliper**, which keeps bad matches, then claiming "balance".
+- **Not checking which scale the software matches on.** In R, `MatchIt` with `distance = "glm"` matches on the probability unless you add `link = "linear.logit"`. The common recommendation (caliper 0.2 SD of the logit) assumes the logit scale.
 - **Not defining the estimand (ATT vs ATE)** before choosing matching or weighting.
 
 ## Related tests
