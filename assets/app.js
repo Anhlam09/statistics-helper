@@ -335,7 +335,7 @@
     const t = testBySlug(slug);
     if (!t) return viewNotFound();
     renderSidebar(slug);
-    document.title = `${shortName(t.name)} · Biostat Test Guide`;
+    document.title = `${shortName(t.name)} · Statistics Helper`;
     if (!available.has(slug)) {
       main.innerHTML = `<h1>${esc(t.name)}</h1><p class="lead">${esc(t.summary)}</p>
         <div class="callout-warn">This page hasn't been written yet. Check back soon, or <a href="#/tests">browse the available tests</a>.</div>`;
@@ -376,7 +376,7 @@
 
   async function viewGuide(file = "content/guide.md", nav = "guide", title = "How to choose") {
     setActiveNav(nav);
-    document.title = `${title} · Biostat Test Guide`;
+    document.title = `${title} · Statistics Helper`;
     try {
       const article = renderMarkdown(await loadPage(file));
       const wrap = document.createElement("div");
@@ -393,7 +393,7 @@
   /* ---------- Wizard ---------- */
   function viewChoose() {
     setActiveNav("choose");
-    document.title = "Which test? · Biostat Test Guide";
+    document.title = "Which test? · Statistics Helper";
     const { NODES, resolveCompare } = window.WIZARD;
     const path = [];          // [{ nodeId, option }]
     const answers = () => Object.fromEntries(path.filter((p) => p.option.key).map((p) => [p.nodeId, p.option.key]));
@@ -511,7 +511,7 @@
 
   function viewCalculators() {
     setActiveNav("calculators");
-    document.title = "Calculators · Biostat Test Guide";
+    document.title = "Calculators · Statistics Helper";
     const list = calcs();
     main.innerHTML = `
       <h1>Calculators</h1>
@@ -525,7 +525,7 @@
     setActiveNav("calculators");
     const c = calcs().find((x) => x.id === id);
     if (!c) return viewNotFound();
-    document.title = `${c.title} · Biostat Test Guide`;
+    document.title = `${c.title} · Statistics Helper`;
     const links = (c.related || []).map(testBySlug).filter(Boolean)
       .map((t) => `<a class="chip cat" href="#/test/${t.slug}">${esc(shortName(t.name))}</a>`).join(" ");
     main.innerHTML = `<div class="calc-page">
@@ -550,7 +550,7 @@
     const params = new URLSearchParams(query || "");
     const parts = path.split("/").filter(Boolean);
     main.onclick = null;
-    document.title = "Biostat Test Guide";
+    document.title = "Statistics Helper";
     closeMenu();
     if (parts[0] !== "test") renderSidebar(null);
     if (!parts.length) viewHome();

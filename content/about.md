@@ -4,7 +4,7 @@
 
 ## Hi, I'm Anh Lam
 
-I made Biostat Test Guide because "which test should I use?" is one of the most common questions in clinical research, and the answers are spread across textbooks, forum threads, and software manuals. This site puts them in one place, in plain language, with a cup of coffee and a few plush friends for company.
+I made Statistics Helper because "which test should I use?" is one of the most common questions in clinical research, and the answers are spread across textbooks, forum threads, and software manuals. This site puts them in one place, in plain language, with a cup of coffee and a few plush friends for company.
 
 ## What you'll find here
 

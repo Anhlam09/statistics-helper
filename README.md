@@ -1,8 +1,8 @@
-# Biostat Test Guide
+# Statistics Helper
 
 A free, friendly guide to choosing and running statistical tests in clinical research. It has 62 lessons, each with a plain-language explanation, a clinical example, the assumptions to check, and runnable **R** and **Python** code. Some lessons also include **SAS** code, which is marked as not yet tested.
 
-**Live site:** https://anhlam09.github.io/biostat-test-guide/
+**Live site:** https://anhlam09.github.io/statistics-helper/
 
 > **Educational resource.** Always pre-specify your analysis and consult a statistician for trial work.
 
